@@ -8,8 +8,10 @@ dependencies = [
     "flask>=3.0.0",
 ]
 
-[tool.setuptools.packages.find]
-include = ["api*"]
+[tool.setuptools]
+# Explicitly prevent automatic discovery from scanning your web assets
+packages = ["api"]
 
 [tool.uv]
 package = false
+
