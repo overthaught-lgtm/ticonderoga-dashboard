@@ -9,9 +9,9 @@ dependencies = [
 ]
 
 [tool.setuptools]
-# Explicitly prevent automatic discovery from scanning your web assets
+# Force setuptools to look ONLY inside the api folder and ignore absolutely everything else
 packages = ["api"]
+package-dir = {"" = "."}
 
 [tool.uv]
 package = false
-
