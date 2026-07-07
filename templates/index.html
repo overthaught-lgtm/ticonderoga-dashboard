@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ticonderoga Portal | Data Ingestion Pipeline</title>
+  <style>
+    :root {
+      --bg: #09090b;
+      --panel: #18181b;
+      --border: #27272a;
+      --text: #f4f4f5;
+      --accent-green: #22c55e;
+      --accent-blue: #3b82f6;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    h1 { font-size: 2.2rem; letter-spacing: -0.05em; margin-bottom: 0.5rem; }
+    p { color: #a1a1aa; margin: 0; }
+    
+    .pipeline-container {
+      display: grid;
+      grid-template-columns: 1fr 60px 1fr;
+      gap: 1rem;
+      width: 100%;
+      max-width: 1100px;
+      align-items: center;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      height: 400px;
+      display: flex;
+      flex-direction: column;
+    }
+    .panel-header {
+      font-weight: 600;
+      font-size: 1.1rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.75rem;
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 700;
+    }
+    .badge-ears { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+    .badge-dap { background: rgba(34, 197, 94, 0.2); color: var(--accent-green); }
+    
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .metric-box {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid var(--border);
+      padding: 0.75rem;
+      border-radius: 6px;
+    }
+    .metric-label { font-size: 0.8rem; color: #71717a; text-transform: uppercase; }
+    .metric-value { font-size: 1.4rem; font-weight: bold; font-family: monospace; margin-top: 0.25rem; }
+
+    .connector {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.5rem;
+      color: #71717a;
+      animation: pulse 1.5s infinite;
+    }
+    
+    .terminal {
+      background: #000;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 0.8rem;
+      padding: 0.7rem;
+      flex-grow: 1;
+      overflow-y: hidden;
+      color: #a1a1aa;
+      line-height: 1.4;
+    }
+    .term-line { color: var(--accent-green); }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; transform: scale(0.95); }
+      50% { opacity: 1; transform: scale(1.05); color: var(--accent-green); }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>TICONDEROGA</h1>
+    <p>Event-Aware Streaming Realtime Ingestion Engine Architecture</p>
+  </header>
+
+  <div class="pipeline-container">
+    
+    <div class="panel">
+      <div class="panel-header">
+        <span>1. EARS Layer (Sense)</span>
+        <span class="badge badge-ears">6x REDPANDA STREAMS</span>
+      </div>
+      <div class="metric-grid">
+        <div class="metric-box">
+          <div class="metric-label">Movement Velocity</div>
+          <div class="metric-value" id="ui-velocity">-- m/s</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">Dwell Engagement</div>
+          <div class="metric-value" id="ui-dwell">--%</div>
+        </div>
+      </div>
+      <div class="terminal" id="ears-terminal">Initializing stream listeners...</div>
+    </div>
+
+    <div class="connector">➔</div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <span>2. DAP Engine (Profile)</span>
+        <span class="badge badge-dap" id="ui-status">CALCULATING</span>
+      </div>
+      <div class="metric-grid">
+        <div class="metric-box">
+          <div class="metric-label">Efficiency Score</div>
+          <div class="metric-value" style="color: var(--accent-green);" id="ui-efficiency">--</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">Congestion Risk</div>
+          <div class="metric-value" style="color: #ef4444;" id="ui-risk">--</div>
+        </div>
+      </div>
+      <div class="terminal" id="dap-terminal">Awaiting serialization telemetry parameters...</div>
+    </div>
+
+  </div>
+
+  <script>
+    const DAP_WORKER_URL = "https://ears-sse-stream.overthaught.workers.dev";
+    
+    function startPipelineObservatory() {
+      const earsTerm = document.getElementById("ears-terminal");
+      const dapTerm = document.getElementById("dap-terminal");
+      
+      const source = new EventSource(DAP_WORKER_URL);
+
+      source.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        document.getElementById("ui-velocity").innerText = `${data.velocity} m/s`;
+        document.getElementById("ui-dwell").innerText = `${data.dwellIndex}%`;
+        earsTerm.innerHTML = `<span class="term-line">[INGEST]</span> V:${data.velocity} | D:${data.dwellIndex}<br>` + earsTerm.innerHTML;
+
+        document.getElementById("ui-efficiency").innerText = `${data.storeEfficiency || '88'}/100`;
+        document.getElementById("ui-risk").innerText = `${data.congestionRisk || '12'}%`;
+        
+        dapTerm.innerHTML = `[ALGO EXECUTE] Efficiency Calculation Completed.<br>` + dapTerm.innerHTML;
+      };
+
+      source.onerror = () => {
+        source.close();
+        setTimeout(startPipelineObservatory, 5000);
+      };
+    }
+
+    startPipelineObservatory();
+  </script>
+</body>
+</html>
+
