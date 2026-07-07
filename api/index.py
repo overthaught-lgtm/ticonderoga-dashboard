@@ -1,12 +1,21 @@
 import os
 from flask import Flask, render_template
 
-# This tells Flask exactly where to find the templates folder relative to Vercel's environment execution path
-template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
-app = Flask(__name__, template_folder=template_dir)
+# Resolve absolute paths for templates and static files
+base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+template_dir = os.path.join(base_dir, 'templates')
+static_dir = os.path.join(base_dir, 'static')
 
-@app.route('/')
-def index():
+# Create Flask app with explicit template and static dirs
+app = Flask(
+    __name__,
+    template_folder=template_dir,
+    static_folder=static_dir,
+    static_url_path='/static'
+)
+
+# Catch-all route to serve index for root and any sub-paths
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def index(path):
     return render_template('index.html')
-
-# DO NOT include app.run() here for Vercel production environments
