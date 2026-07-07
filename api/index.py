@@ -1,21 +1,21 @@
-import os
-from flask import Flask, render_template
+from flask import Flask, jsonify, request
 
-# Resolve absolute paths for templates and static files
-base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-template_dir = os.path.join(base_dir, 'templates')
-static_dir = os.path.join(base_dir, 'static')
+app = Flask(__name__)
 
-# Create Flask app with explicit template and static dirs
-app = Flask(
-    __name__,
-    template_folder=template_dir,
-    static_folder=static_dir,
-    static_url_path='/static'
-)
-
-# Catch-all route to serve index for root and any sub-paths
 @app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def index(path):
-    return render_template('index.html')
+@app.route('/<path:path>', methods=['GET', 'POST'])
+def catch_all(path):
+    # Handle the root path test
+    if path == "" and request.method == 'GET':
+        return "Quill Flask is live"
+        
+    # Handle the API data pipeline test
+    if path == "save" and request.method == 'POST':
+        data = request.get_json() or {}
+        return jsonify({
+            "status": "saved", 
+            "content": data.get("content", "No content provided")
+        })
+
+    # Fallback error mapping
+    return jsonify({"error": f"Path /{path} not found or method not allowed"}), 404
